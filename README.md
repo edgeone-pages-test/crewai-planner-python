@@ -4,7 +4,7 @@
 
 **Framework:** CrewAI · **Category:** Quick Start · **Language:** Python
 
-[![Deploy to EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/makers/new?template=crewai-planner-python&from=within&fromAgent=1&agentLang=python)
+[![Deploy to EdgeOne Makers](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/makers/new?template=crewai-product-planner-starter&from=within&fromAgent=1&agentLang=python)
 
 ## Overview
 
