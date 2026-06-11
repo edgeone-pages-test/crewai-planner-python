@@ -27,7 +27,7 @@ CrewAI Product Planner simulates a product team: a Product Manager interviews yo
 
 ### How to get `AI_GATEWAY_API_KEY`
 
-1. Open the [Makers Console](https://console.cloud.tencent.com/edgeone/makers).
+1. Open the [Makers Console](https://edgeone.ai/makers/new?s_url=https://console.tencentcloud.com/edgeone/makers).
 2. Sign in and enable Makers.
 3. Go to **Makers → Models → API Key** and create a key.
 4. Copy it into `AI_GATEWAY_API_KEY` (set `AI_GATEWAY_BASE_URL` to `https://ai-gateway.edgeone.link/v1`).
