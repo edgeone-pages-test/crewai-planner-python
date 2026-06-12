@@ -127,6 +127,7 @@ export function useSSE(onEvent: (event: SSEEvent) => void) {
   }, []);
 
   // Returns raw stored messages: { role, content, metadata }
+  // Throws on error (non-200, empty result, network failure) so the caller can display a toast.
   const loadHistory = useCallback(async (
     targetId: string,
   ): Promise<Array<{ role: string; content: string; metadata?: Record<string, unknown> | null }>> => {
@@ -142,11 +143,19 @@ export function useSSE(onEvent: (event: SSEEvent) => void) {
         },
         body: JSON.stringify({ conversationId: targetId }),
       });
-      if (!res.ok) return [];
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const data = await res.json();
-      return data.messages || [];
-    } catch {
-      return [];
+      const messages = data.messages || [];
+      if (messages.length === 0) {
+        throw new Error('empty');
+      }
+      return messages;
+    } catch (err) {
+      // Re-throw all errors so the caller can display the appropriate message.
+      // err.message === 'empty' means the conversation has no history.
+      throw err;
     }
   }, []);
 

@@ -225,6 +225,15 @@ export default function App() {
 
   const [history, setHistory] = useState<HistoryItem[]>(getHistory);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Auto-dismiss load error toast after 3s
+  useEffect(() => {
+    if (loadError) {
+      const timer = setTimeout(() => setLoadError(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [loadError]);
 
   const refreshHistory = useCallback(() => setHistory(getHistory()), []);
 
@@ -296,50 +305,55 @@ export default function App() {
   const handleSelectHistory = useCallback(async (id: string) => {
     setIsLoadingHistory(true);
     dispatch({ type: 'RESET' });
-    const messages = await loadHistory(id);
 
-    const restored: ChatItem[] = [];
-    let lastPhase: Phase | null = null;
-    const completed = new Set<Phase>();
+    try {
+      const messages = await loadHistory(id);
 
-    for (const msg of messages) {
-      const meta = (msg.metadata || {}) as Record<string, unknown>;
-      const agent = meta.agent as string | undefined;
-      const phase = meta.phase as Phase | undefined;
+      const restored: ChatItem[] = [];
+      let lastPhase: Phase | null = null;
+      const completed = new Set<Phase>();
 
-      if (msg.role === 'user') {
-        restored.push({ type: 'user', content: msg.content });
-        continue;
+      for (const msg of messages) {
+        const meta = (msg.metadata || {}) as Record<string, unknown>;
+        const agent = meta.agent as string | undefined;
+        const phase = meta.phase as Phase | undefined;
+
+        if (msg.role === 'user') {
+          restored.push({ type: 'user', content: msg.content });
+          continue;
+        }
+
+        // Track phase progression for the timeline
+        if (phase) {
+          if (lastPhase && lastPhase !== phase) completed.add(lastPhase);
+          lastPhase = phase;
+        }
+
+        if (agent) {
+          // Hide Reviewer messages (same as live streaming)
+          if (agent === 'Product Reviewer') continue;
+          restored.push({ type: 'divider', agent });
+          restored.push({
+            type: 'message',
+            agent,
+            status: 'completed',
+            content: msg.content,
+          });
+        }
       }
 
-      // Track phase progression for the timeline
-      if (phase) {
-        if (lastPhase && lastPhase !== phase) completed.add(lastPhase);
-        lastPhase = phase;
-      }
+      // Promote the last seen phase as the current phase (if not yet completed elsewhere)
+      if (lastPhase) completed.delete(lastPhase);
 
-      if (agent) {
-        // Hide Reviewer messages (same as live streaming)
-        if (agent === 'Product Reviewer') continue;
-        restored.push({ type: 'divider', agent });
-        restored.push({
-          type: 'message',
-          agent,
-          status: 'completed',
-          content: msg.content,
-        });
-      }
+      dispatch({
+        type: 'RESTORE',
+        messages: restored,
+        phase: lastPhase,
+        completed,
+      });
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Unknown error');
     }
-
-    // Promote the last seen phase as the current phase (if not yet completed elsewhere)
-    if (lastPhase) completed.delete(lastPhase);
-
-    dispatch({
-      type: 'RESTORE',
-      messages: restored,
-      phase: lastPhase,
-      completed,
-    });
     setIsLoadingHistory(false);
   }, [loadHistory]);
 
@@ -423,6 +437,28 @@ export default function App() {
 
       {/* Main Layout */}
       <div className="flex flex-1 overflow-hidden">
+        {/* Floating error toast — auto-dismiss 3s */}
+        {loadError && (
+          <div className="absolute top-4 inset-x-0 flex justify-center z-50 animate-fade-in-up">
+            <div className="flex items-center gap-2.5 rounded-lg border border-red-200 bg-red-50 px-4 py-2.5 shadow-lg">
+              <svg className="h-4 w-4 shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span className="text-sm text-red-700">
+                {loadError === 'empty' ? t('history.empty') : `${t('history.failed')}: ${loadError}`}
+              </span>
+              <button
+                onClick={() => setLoadError(null)}
+                className="cursor-pointer ml-1 rounded p-0.5 text-red-400 hover:text-red-600 transition-colors"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sidebar */}
         <aside
           className="flex-shrink-0 overflow-hidden"

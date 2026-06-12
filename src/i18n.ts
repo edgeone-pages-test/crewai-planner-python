@@ -60,6 +60,8 @@ const messages: Record<Lang, Record<string, string>> = {
     'history.title': '历史记录',
     'history.delete': '删除',
     'history.loading': '加载中...',
+    'history.empty': '该对话暂无历史记录',
+    'history.failed': '加载对话历史失败',
   },
   en: {
     'status.idle': 'Waiting',
@@ -109,6 +111,8 @@ const messages: Record<Lang, Record<string, string>> = {
     'history.title': 'History',
     'history.delete': 'Delete',
     'history.loading': 'Loading...',
+    'history.empty': 'This conversation has no history',
+    'history.failed': 'Failed to load conversation history',
   },
 };
 
