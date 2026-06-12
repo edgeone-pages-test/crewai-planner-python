@@ -233,16 +233,17 @@ export function InputPanel({
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); onRemoveHistory(item.id); }}
-                  className="cursor-pointer"
+                  disabled={isRunning}
                   style={{
                     background: 'none',
                     border: 'none',
                     padding: '2px 4px',
                     fontSize: 11,
                     color: 'var(--text-muted)',
-                    cursor: 'pointer',
+                    cursor: isRunning ? 'not-allowed' : 'pointer',
                     fontFamily: 'inherit',
                     borderRadius: 4,
+                    opacity: isRunning ? 0.5 : 1,
                   }}
                   title={t('history.delete')}
                 >
